@@ -1,0 +1,24 @@
+# ═══════════════════════════════════════════════════════════════
+# RENDER.COM DEPLOYMENT CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: excel-intelligence-bot
+    env: node
+    region: singapore  # Closest to Indonesia
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: ENABLE_WEB_DASHBOARD
+        value: true
+      - key: ENABLE_API
+        value: true
