@@ -1,29 +1,31 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// STATS.JS - /stats Command
-// Excel Intelligence Bot - 2025 Edition
+// STATS.JS - Bot statistics command
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { SlashCommandBuilder } from 'discord.js';
-import { responseBuilder } from '../handlers/responseBuilder.js';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COMMAND DEFINITION
-// ─────────────────────────────────────────────────────────────────────────────
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('stats')
     .setDescription('📈 Tampilkan statistik bot'),
 
-  cooldown: 5,
-
-  /**
-   * 🚀 Execute command
-   */
   async execute(interaction, bot) {
     const stats = bot.getStats();
-    const embed = responseBuilder.buildStatsEmbed(stats);
-    
+
+    const embed = new EmbedBuilder()
+      .setTitle('📈 Bot Statistics')
+      .setColor(0x5865F2)
+      .addFields(
+        { name: '⏱️ Uptime', value: stats.uptimeFormatted || 'N/A', inline: true },
+        { name: '🏠 Servers', value: String(stats.servers), inline: true },
+        { name: '📡 Ping', value: `${stats.ping}ms`, inline: true },
+        { name: '🎮 Commands Run', value: String(stats.commandsExecuted), inline: true },
+        { name: '📁 Files Processed', value: String(stats.filesProcessed), inline: true },
+        { name: '❌ Errors', value: String(stats.errors), inline: true }
+      )
+      .setFooter({ text: 'Excel Intelligence Bot v2.0' })
+      .setTimestamp();
+
     await interaction.reply({ embeds: [embed] });
   }
 };
