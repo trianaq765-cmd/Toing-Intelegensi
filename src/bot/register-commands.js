@@ -1,54 +1,207 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// REGISTER-COMMANDS.JS - Register Slash Commands to Discord
+// REGISTER-COMMANDS.JS - Register Slash Commands to Discord (FIXED)
 // Excel Intelligence Bot - 2025 Edition
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { REST, Routes } from 'discord.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
+import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 // ─────────────────────────────────────────────────────────────────────────────
-// LOAD COMMANDS
+// COMMAND DEFINITIONS (Inline untuk memastikan tidak ada import error)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function loadCommands() {
-  const commands = [];
-  const commandsPath = join(__dirname, 'commands');
+const commands = [
+  // /analyze
+  new SlashCommandBuilder()
+    .setName('analyze')
+    .setDescription('🔍 Analisis file Excel/CSV secara mendalam')
+    .addAttachmentOption(option =>
+      option
+        .setName('file')
+        .setDescription('File Excel (.xlsx, .xls) atau CSV untuk dianalisis')
+        .setRequired(true)
+    )
+    .addBooleanOption(option =>
+      option
+        .setName('deep')
+        .setDescription('Analisis mendalam (lebih detail)')
+        .setRequired(false)
+    )
+    .addBooleanOption(option =>
+      option
+        .setName('report')
+        .setDescription('Generate laporan Excel lengkap')
+        .setRequired(false)
+    ),
 
-  if (!fs.existsSync(commandsPath)) {
-    console.error('❌ Commands directory not found');
-    return commands;
-  }
+  // /clean
+  new SlashCommandBuilder()
+    .setName('clean')
+    .setDescription('🧹 Bersihkan dan perbaiki data Excel/CSV')
+    .addAttachmentOption(option =>
+      option
+        .setName('file')
+        .setDescription('File Excel/CSV untuk dibersihkan')
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option
+        .setName('mode')
+        .setDescription('Mode pembersihan')
+        .setRequired(false)
+        .addChoices(
+          { name: '🚀 Quick - Hapus duplikat & baris kosong', value: 'quick' },
+          { name: '📋 Standard - Termasuk trim & format', value: 'standard' },
+          { name: '💼 Financial - Optimasi untuk data keuangan', value: 'financial' },
+          { name: '🔧 Full - Semua pembersihan', value: 'full' }
+        )
+    ),
 
-  const commandFiles = fs.readdirSync(commandsPath)
-    .filter(file => file.endsWith('.js'));
+  // /convert
+  new SlashCommandBuilder()
+    .setName('convert')
+    .setDescription('🔄 Konversi file ke format lain')
+    .addAttachmentOption(option =>
+      option
+        .setName('file')
+        .setDescription('File untuk dikonversi')
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option
+        .setName('format')
+        .setDescription('Format tujuan')
+        .setRequired(true)
+        .addChoices(
+          { name: '📄 CSV', value: 'csv' },
+          { name: '📋 JSON', value: 'json' },
+          { name: '🌐 HTML', value: 'html' },
+          { name: '📝 Markdown', value: 'md' },
+          { name: '🗃️ SQL', value: 'sql' },
+          { name: '📰 XML', value: 'xml' }
+        )
+    ),
 
-  for (const file of commandFiles) {
-    try {
-      const filePath = join(commandsPath, file);
-      const command = await import(`file://${filePath}`);
+  // /create
+  new SlashCommandBuilder()
+    .setName('create')
+    .setDescription('✨ Buat Excel dari teks atau instruksi')
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('from_instruction')
+        .setDescription('Buat Excel dari instruksi bahasa natural')
+        .addStringOption(option =>
+          option
+            .setName('instruction')
+            .setDescription('Instruksi pembuatan (contoh: "buatkan tabel karyawan")')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('quick')
+        .setDescription('Buat Excel cepat dengan kolom tertentu')
+        .addStringOption(option =>
+          option
+            .setName('columns')
+            .setDescription('Daftar kolom dipisah koma')
+            .setRequired(true)
+        )
+        .addIntegerOption(option =>
+          option
+            .setName('rows')
+            .setDescription('Jumlah baris (default: 5)')
+            .setRequired(false)
+            .setMinValue(1)
+            .setMaxValue(100)
+        )
+    ),
 
-      if (command.default && command.default.data) {
-        commands.push(command.default.data.toJSON());
-        console.log(`  ✓ Loaded: ${command.default.data.name}`);
-      }
-    } catch (error) {
-      console.error(`  ❌ Failed to load ${file}:`, error.message);
-    }
-  }
+  // /template
+  new SlashCommandBuilder()
+    .setName('template')
+    .setDescription('📋 Generate template Excel profesional')
+    .addStringOption(option =>
+      option
+        .setName('type')
+        .setDescription('Jenis template')
+        .setRequired(true)
+        .addChoices(
+          { name: '🧾 Invoice / Faktur', value: 'invoice' },
+          { name: '💰 Payroll / Slip Gaji', value: 'payroll' },
+          { name: '📦 Inventory / Stok Barang', value: 'inventory' },
+          { name: '📊 Sales Report', value: 'sales_report' },
+          { name: '💵 Budget / Anggaran', value: 'budget' },
+          { name: '📅 Attendance / Absensi', value: 'attendance' },
+          { name: '🧾 Expense / Pengeluaran', value: 'expense' }
+        )
+    )
+    .addStringOption(option =>
+      option
+        .setName('company')
+        .setDescription('Nama perusahaan (opsional)')
+        .setRequired(false)
+    ),
 
-  return commands;
-}
+  // /format
+  new SlashCommandBuilder()
+    .setName('format')
+    .setDescription('🎨 Format dan styling file Excel')
+    .addAttachmentOption(option =>
+      option
+        .setName('file')
+        .setDescription('File Excel/CSV untuk diformat')
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option
+        .setName('style')
+        .setDescription('Style preset')
+        .setRequired(false)
+        .addChoices(
+          { name: '💼 Professional', value: 'professional' },
+          { name: '🎨 Modern', value: 'modern' },
+          { name: '📝 Minimal', value: 'minimal' },
+          { name: '🌈 Colorful', value: 'colorful' },
+          { name: '🌙 Dark', value: 'dark' },
+          { name: '🇮🇩 Indonesia', value: 'indonesia' }
+        )
+    ),
+
+  // /stats
+  new SlashCommandBuilder()
+    .setName('stats')
+    .setDescription('📈 Tampilkan statistik bot'),
+
+  // /help
+  new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('❓ Tampilkan panduan penggunaan bot')
+    .addStringOption(option =>
+      option
+        .setName('command')
+        .setDescription('Nama command untuk info detail')
+        .setRequired(false)
+        .addChoices(
+          { name: 'analyze', value: 'analyze' },
+          { name: 'clean', value: 'clean' },
+          { name: 'convert', value: 'convert' },
+          { name: 'create', value: 'create' },
+          { name: 'template', value: 'template' },
+          { name: 'format', value: 'format' }
+        )
+    ),
+
+  // /ping (simple test command)
+  new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('🏓 Cek apakah bot aktif')
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REGISTER COMMANDS
+// REGISTER FUNCTION
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function registerCommands() {
@@ -56,97 +209,100 @@ async function registerCommands() {
   const clientId = process.env.DISCORD_CLIENT_ID;
   const guildId = process.env.DISCORD_GUILD_ID;
 
-  if (!token || !clientId) {
-    console.error('❌ Missing DISCORD_TOKEN or DISCORD_CLIENT_ID in environment');
+  // Validation
+  if (!token) {
+    console.error('❌ ERROR: DISCORD_TOKEN tidak ditemukan di .env');
+    console.log('\n📝 Pastikan file .env berisi:');
+    console.log('   DISCORD_TOKEN=your_bot_token_here');
     process.exit(1);
   }
 
-  console.log('📦 Loading commands...\n');
-  const commands = await loadCommands();
-  console.log(`\n✅ Loaded ${commands.length} commands\n`);
+  if (!clientId) {
+    console.error('❌ ERROR: DISCORD_CLIENT_ID tidak ditemukan di .env');
+    console.log('\n📝 Pastikan file .env berisi:');
+    console.log('   DISCORD_CLIENT_ID=your_client_id_here');
+    process.exit(1);
+  }
+
+  console.log('\n╔═══════════════════════════════════════════════════════════╗');
+  console.log('║           DISCORD SLASH COMMANDS REGISTRATION             ║');
+  console.log('╚═══════════════════════════════════════════════════════════╝\n');
+
+  console.log(`📋 Commands to register: ${commands.length}`);
+  console.log(`🆔 Client ID: ${clientId}`);
+  console.log(`🏠 Guild ID: ${guildId || '(Global - All Servers)'}\n`);
+
+  // Convert to JSON
+  const commandsJson = commands.map(cmd => cmd.toJSON());
+
+  // Show command list
+  console.log('📦 Commands:');
+  commandsJson.forEach(cmd => {
+    console.log(`   /${cmd.name} - ${cmd.description}`);
+  });
+  console.log('');
 
   const rest = new REST({ version: '10' }).setToken(token);
 
   try {
-    console.log('🔄 Registering commands...\n');
+    console.log('⏳ Registering commands...\n');
+
+    let data;
 
     if (guildId) {
-      // Guild commands (instant update, for testing)
-      console.log(`📍 Registering to guild: ${guildId}`);
-      
-      const data = await rest.put(
+      // Guild-specific (instant update)
+      console.log(`📍 Mode: Guild-specific (instant update)`);
+      console.log(`🏠 Target Guild: ${guildId}\n`);
+
+      data = await rest.put(
         Routes.applicationGuildCommands(clientId, guildId),
-        { body: commands }
+        { body: commandsJson }
       );
 
-      console.log(`\n✅ Successfully registered ${data.length} guild commands!`);
+      console.log(`✅ Successfully registered ${data.length} commands to guild!`);
     } else {
-      // Global commands (takes up to 1 hour to update)
-      console.log('🌍 Registering globally (may take up to 1 hour to propagate)');
-      
-      const data = await rest.put(
+      // Global (takes up to 1 hour)
+      console.log('🌍 Mode: Global (may take up to 1 hour to propagate)\n');
+
+      data = await rest.put(
         Routes.applicationCommands(clientId),
-        { body: commands }
+        { body: commandsJson }
       );
 
-      console.log(`\n✅ Successfully registered ${data.length} global commands!`);
+      console.log(`✅ Successfully registered ${data.length} global commands!`);
     }
 
-    console.log('\n' + '═'.repeat(50));
-    console.log('Commands registered:');
-    console.log('═'.repeat(50));
-    commands.forEach(cmd => {
-      console.log(`  /${cmd.name} - ${cmd.description}`);
-    });
-    console.log('═'.repeat(50) + '\n');
+    console.log('\n╔═══════════════════════════════════════════════════════════╗');
+    console.log('║                    REGISTRATION COMPLETE                  ║');
+    console.log('╚═══════════════════════════════════════════════════════════╝\n');
+
+    console.log('🎉 Commands are now available! Try:');
+    console.log('   /ping - Test if bot responds');
+    console.log('   /help - Show all commands');
+    console.log('   /analyze - Analyze Excel file\n');
+
+    if (!guildId) {
+      console.log('⚠️  Note: Global commands may take up to 1 hour to appear.');
+      console.log('   For instant updates, set DISCORD_GUILD_ID in .env\n');
+    }
 
   } catch (error) {
-    console.error('❌ Error registering commands:', error);
+    console.error('❌ Error registering commands:');
+    console.error(error);
+
+    if (error.code === 50001) {
+      console.log('\n💡 Fix: Bot mungkin tidak memiliki akses ke server.');
+      console.log('   Pastikan bot sudah diinvite dengan permission yang benar.');
+    }
+
+    if (error.code === 401) {
+      console.log('\n💡 Fix: Token tidak valid.');
+      console.log('   Cek DISCORD_TOKEN di file .env');
+    }
+
+    process.exit(1);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DELETE COMMANDS (Optional)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function deleteCommands() {
-  const token = process.env.DISCORD_TOKEN;
-  const clientId = process.env.DISCORD_CLIENT_ID;
-  const guildId = process.env.DISCORD_GUILD_ID;
-
-  const rest = new REST({ version: '10' }).setToken(token);
-
-  try {
-    console.log('🗑️ Deleting all commands...\n');
-
-    if (guildId) {
-      await rest.put(
-        Routes.applicationGuildCommands(clientId, guildId),
-        { body: [] }
-      );
-      console.log('✅ Deleted all guild commands');
-    } else {
-      await rest.put(
-        Routes.applicationCommands(clientId),
-        { body: [] }
-      );
-      console.log('✅ Deleted all global commands');
-    }
-  } catch (error) {
-    console.error('❌ Error deleting commands:', error);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RUN
-// ─────────────────────────────────────────────────────────────────────────────
-
-const args = process.argv.slice(2);
-
-if (args.includes('--delete')) {
-  deleteCommands();
-} else {
-  registerCommands();
-}
-
-export { registerCommands, deleteCommands, loadCommands };
+// Run
+registerCommands();
