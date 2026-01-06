@@ -1,16 +1,24 @@
 {
   "name": "excel-intelligence-bot",
   "version": "2.0.0",
-  "description": "Bot Discord dengan AI untuk analisis Excel",
+  "description": "Bot Discord dengan AI untuk analisis Excel - Indonesia Focused",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node src/bot/auto-register.js && node src/server.js",
     "dev": "node --watch src/server.js",
     "bot": "node src/bot/index.js",
-    "register": "node src/bot/register-commands.js",
-    "register:global": "node src/bot/register-commands.js --global"
+    "register": "node src/bot/register-commands.js"
   },
+  "keywords": [
+    "discord-bot",
+    "excel",
+    "analysis",
+    "indonesia",
+    "ai"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
     "discord.js": "^14.14.1",
     "express": "^4.18.2",
